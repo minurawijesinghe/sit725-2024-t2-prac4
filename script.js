@@ -1,21 +1,44 @@
 // script.js
-// Backend API URL
 const API_URL = 'http://localhost:3000';
 
-// Function to display messages (error or success)
+// Initialize Materialize components
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize any Materialize components here if needed
+    M.updateTextFields();
+    
+    // Initialize event listeners
+    initializeEventListeners();
+    
+    // Load initial data
+    getUsers();
+});
+
+// Initialize all event listeners
+function initializeEventListeners() {
+    // Save button click handler
+    document.getElementById('saveButton').addEventListener('click', saveUser);
+    
+    // Refresh button click handler
+    document.getElementById('refreshButton').addEventListener('click', getUsers);
+    
+    // Add event listeners for enter key in input fields
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                saveUser();
+            }
+        });
+    });
+}
+
+// Function to show messages using Materialize toast
 function showMessage(message, type) {
-    const messageDiv = document.createElement('div');
-    messageDiv.textContent = message;
-    messageDiv.className = type;
-    
-    // Remove previous messages
-    const previousMessages = document.querySelectorAll('.error, .success');
-    previousMessages.forEach(msg => msg.remove());
-    
-    document.querySelector('.container').appendChild(messageDiv);
-    
-    // Remove message after 3 seconds
-    setTimeout(() => messageDiv.remove(), 3000);
+    M.toast({
+        html: message,
+        classes: type,
+        displayLength: 3000
+    });
 }
 
 // Function to validate email
@@ -55,6 +78,8 @@ async function saveUser() {
             showMessage('User saved successfully', 'success');
             nameInput.value = '';
             emailInput.value = '';
+            // Reset Materialize labels
+            M.updateTextFields();
             getUsers(); // Refresh the list
         } else {
             const error = await response.json();
@@ -73,10 +98,14 @@ async function getUsers() {
         const users = await response.json();
         
         const userList = document.getElementById('userList');
-        userList.innerHTML = '<h2>Users</h2>';
+        userList.innerHTML = '<h5 class="center-align">Users List</h5>';
         
         if (users.length === 0) {
-            userList.innerHTML += '<p>No users found</p>';
+            userList.innerHTML += `
+                <div class="center-align grey-text">
+                    <i class="material-icons medium">person_outline</i>
+                    <p>No users found</p>
+                </div>`;
             return;
         }
         
@@ -84,8 +113,19 @@ async function getUsers() {
             const userDiv = document.createElement('div');
             userDiv.className = 'user-item';
             userDiv.innerHTML = `
-                <strong>Name:</strong> ${user.name}<br>
-                <strong>Email:</strong> ${user.email}
+                <div class="row valign-wrapper" style="margin-bottom: 0;">
+                    <div class="col s2 m1">
+                        <i class="material-icons circle blue white-text">person</i>
+                    </div>
+                    <div class="col s10 m11">
+                        <span class="black-text">
+                            <strong>${user.name}</strong>
+                        </span><br>
+                        <span class="user-email">
+                            <i class="material-icons tiny">email</i> ${user.email}
+                        </span>
+                    </div>
+                </div>
             `;
             userList.appendChild(userDiv);
         });
@@ -94,18 +134,3 @@ async function getUsers() {
         showMessage('Error fetching users', 'error');
     }
 }
-
-// Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    getUsers();
-    
-    // Add event listeners for enter key in input fields
-    const inputs = document.querySelectorAll('input');
-    inputs.forEach(input => {
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                saveUser();
-            }
-        });
-    });
-});
